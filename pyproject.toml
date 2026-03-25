@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data-connectors"
+version = "0.1.0"
+description = "Pluggable data-ingestion connectors for Media Monitoring & Analysis pipelines"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+keywords = ["media-monitoring", "reliefweb", "data-connectors", "nlp", "scraping"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+
+dependencies = [
+    "requests>=2.28",
+    "beautifulsoup4>=4.12",
+    "pandas>=2.0",
+    "langdetect>=1.0.9",
+    "nltk>=3.8",
+    "tqdm>=4.65",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+pdf = [
+    # Install the PDF extractor separately:
+    # pip install git+https://github.com/MediaMonitoringAndAnalysis/documents_processing
+    "openai>=1.0",
+]
+dev = [
+    "pytest>=7",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+]
+
+[project.urls]
+Homepage = "https://github.com/MediaMonitoringAndAnalysis/DataConnectors"
+Repository = "https://github.com/MediaMonitoringAndAnalysis/DataConnectors"
+"Bug Tracker" = "https://github.com/MediaMonitoringAndAnalysis/DataConnectors/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["data_connectors*"]
+
+[tool.setuptools.package-data]
+"data_connectors.reliefweb" = ["sources_metadata.json"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.mypy]
+python_version = "3.9"
+ignore_missing_imports = true
