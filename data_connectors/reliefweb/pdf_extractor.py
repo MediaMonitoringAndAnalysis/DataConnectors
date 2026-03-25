@@ -8,7 +8,7 @@ not installed the function raises :class:`ImportError` with a helpful message.
 from __future__ import annotations
 
 import os
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 from tqdm import tqdm
@@ -24,6 +24,7 @@ def call_pdf_extractor(
     pdf_doc_folder_path: os.PathLike,
     openai_api_key: str,
     additional_columns: List[str] = None,
+    figures_saving_path: Optional[os.PathLike] = None,
 ) -> pd.DataFrame:
     """
     Extract text from PDF attachments listed in *df*.
@@ -44,6 +45,10 @@ def call_pdf_extractor(
     additional_columns:
         Extra columns from *df* to copy into the output rows.
         Defaults to the standard lead schema columns.
+    figures_saving_path:
+        Directory where extracted figures are saved.  Defaults to a
+        ``figures/`` sub-folder inside *pdf_doc_folder_path*, so images
+        always land next to your data rather than in the working directory.
 
     Returns
     -------
@@ -74,6 +79,11 @@ def call_pdf_extractor(
             "Document Source",
         ]
 
+    if figures_saving_path is None:
+        figures_saving_path = os.path.join(pdf_doc_folder_path, "figures")
+
+    os.makedirs(figures_saving_path, exist_ok=True)
+
     extractor = DocumentsDataExtractor(
         inference_pipeline_name="OpenAI",
         model_name="gpt-4o-mini",
@@ -96,7 +106,7 @@ def call_pdf_extractor(
                 metadata_extraction_type="document",
                 relevant_pages_for_metadata_extraction=[0, 1],
                 return_original_pages_numbers=True,
-                figures_saving_path="figures",
+                figures_saving_path=figures_saving_path,
                 doc_url=attachment_url,
             )
 

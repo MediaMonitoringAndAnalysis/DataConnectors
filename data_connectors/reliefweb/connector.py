@@ -283,11 +283,13 @@ def get_reliefweb_leads(
         from .pdf_extractor import call_pdf_extractor
 
         print("Extracting text from PDF attachments…")
+        pdf_files_path = os.path.join(data_folder, project_name, "pdf_files")
         pdf_leads = call_pdf_extractor(
             df=new_leads,
-            pdf_doc_folder_path=os.path.join(data_folder, project_name, "pdf_files"),
+            pdf_doc_folder_path=pdf_files_path,
             openai_api_key=openai_api_key,
             additional_columns=[],
+            figures_saving_path=os.path.join(pdf_files_path, "figures"),
         )
         new_leads = pd.concat([new_leads, pdf_leads], ignore_index=True)
         new_leads = new_leads[new_leads["text"].apply(lambda x: len(str(x).strip()) > 5)]
