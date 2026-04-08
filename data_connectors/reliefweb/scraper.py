@@ -1,29 +1,29 @@
 """
 Low-level ReliefWeb scraping utilities.
 
+All data is fetched by parsing HTML pages with BeautifulSoup – no API key required.
+
 Contains:
-- :class:`ReliefArticleAPI`  – fetch article metadata via the ReliefWeb REST API.
-- :class:`ReliefArticle`     – parse article detail pages via HTML scraping.
-- Module-level helpers used by the scraping pipeline.
+- :class:`ReliefArticle`          – requests + BS4 parser for both list pages and
+                                    article detail pages.
+- :func:`get_total_article_count` – parse the total result count from a river page.
+- :func:`scrape_article_urls_from_page` – collect all article URLs from a river page.
+- :func:`get_source_types`        – map source names to types via bundled metadata.
 """
 
 from __future__ import annotations
 
 import json
 import os
-import random
 import re
 from datetime import datetime
 from importlib import resources
-from itertools import groupby
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import requests
 from bs4 import BeautifulSoup as bs
 from bs4 import NavigableString
-from langdetect import detect
 from nltk.tokenize import word_tokenize
-from tqdm import tqdm
 
 # ---------------------------------------------------------------------------
 # Source metadata (bundled with the package)
@@ -136,13 +136,15 @@ class ReliefArticleAPI:
 
 class ReliefArticle:
     """
-    Scrape a ReliefWeb page (list page *or* article detail page) via HTML parsing.
+    Fetch and parse a ReliefWeb page via HTML scraping (BeautifulSoup).
+
+    Works for both **list/river pages** (used to collect article URLs) and
+    **article detail pages** (used to extract metadata and body text).
 
     Parameters
     ----------
     url:
-        A ReliefWeb URL.  For a list/river page pass a formatted URL string;
-        for an article detail page pass the canonical article URL.
+        Any ReliefWeb URL – a search/updates page or a direct article URL.
     """
 
     def __init__(self, url: str) -> None:
@@ -171,7 +173,7 @@ class ReliefArticle:
             return {}
         return dict(zip(keys, total))
 
-    def _parse_article_detail(self) -> Dict:
+    def _info(self) -> Dict:
         """Parse an article detail page and return a metadata dict."""
         _id_tag = self.content.find("link", {"rel": "shortlink"})
         node_id = int(_id_tag["href"].split("/")[-1]) if _id_tag else -1
@@ -236,9 +238,7 @@ class ReliefArticle:
         similar_urls: List[str] = []
         rel_section = self.content.find("section", {"id": "related"})
         if rel_section:
-            for ar in rel_section.find_all(
-                "article", {"class": "rw-river-article--report"}
-            ):
+            for ar in rel_section.find_all("article", {"class": "rw-river-article--report"}):
                 h3 = ar.find("h3", {"class": "rw-river-article__title"})
                 if h3:
                     a = h3.find("a")
@@ -260,14 +260,14 @@ class ReliefArticle:
 
     def get_info(self) -> Dict:
         """Return parsed article metadata."""
-        return self._parse_article_detail()
+        return self._info()
 
     def save_atts(self, main_dir: str = "./") -> None:
         """Download and save attachment files to *main_dir*."""
         info = self.get_info()
         for i, url in enumerate(info.get("attachments", [])):
             ext = url.split(".")[-1]
-            dest = os.path.join(main_dir, f"{info['node']}_{i+1}.{ext}")
+            dest = os.path.join(main_dir, f"{info['node']}_{i + 1}.{ext}")
             try:
                 with open(dest, "wb") as f:
                     f.write(requests.get(url).content)
@@ -295,9 +295,7 @@ def get_total_article_count(content: bs) -> int:
 
 def scrape_article_urls_from_page(page_content: bs) -> List[str]:
     """Return all article URLs found on a ReliefWeb river page."""
-    main_list = page_content.find(
-        "div", {"class": "[ cd-flow ] rw-river__articles"}
-    )
+    main_list = page_content.find("div", {"class": "[ cd-flow ] rw-river__articles"})
     if not main_list:
         return []
 
@@ -313,16 +311,8 @@ def scrape_article_urls_from_page(page_content: bs) -> List[str]:
 
 
 # ---------------------------------------------------------------------------
-# Text & source helpers
+# Source helpers
 # ---------------------------------------------------------------------------
-
-def detect_language(text: str) -> str:
-    """Return ISO 639-1 language code, or empty string on failure."""
-    try:
-        return detect(text)
-    except Exception:
-        return ""
-
 
 def get_source_types(sources: List[str]) -> List[str]:
     """Map source names to their type using the bundled metadata."""

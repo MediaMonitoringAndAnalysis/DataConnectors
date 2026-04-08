@@ -17,7 +17,6 @@ from tqdm import tqdm
 from ..base import BaseConnector
 from .scraper import (
     ReliefArticle,
-    detect_language,
     get_total_article_count,
     scrape_article_urls_from_page,
 )
