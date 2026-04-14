@@ -25,6 +25,7 @@ def call_pdf_extractor(
     openai_api_key: str,
     additional_columns: List[str] = None,
     figures_saving_path: Optional[os.PathLike] = None,
+    model_name: str = "gpt-4.1-mini",
 ) -> pd.DataFrame:
     """
     Extract text from PDF attachments listed in *df*.
@@ -86,7 +87,7 @@ def call_pdf_extractor(
 
     extractor = DocumentsDataExtractor(
         inference_pipeline_name="OpenAI",
-        model_name="gpt-4o-mini",
+        model_name=model_name,
         api_key=openai_api_key,
     )
 

@@ -199,6 +199,7 @@ def get_reliefweb_leads(
     extract_pdf_text: bool = True,
     save: bool = True,
     sample: bool = False,
+    model_name: str = "gpt-4.1-mini",
 ) -> pd.DataFrame:
     """
     Fetch ReliefWeb leads and optionally extract text from PDF attachments.
@@ -289,6 +290,7 @@ def get_reliefweb_leads(
             openai_api_key=openai_api_key,
             additional_columns=[],
             figures_saving_path=os.path.join(pdf_files_path, "figures"),
+            model_name=model_name,
         )
         new_leads = pd.concat([new_leads, pdf_leads], ignore_index=True)
         new_leads = new_leads[new_leads["text"].apply(lambda x: len(str(x).strip()) > 5)]
